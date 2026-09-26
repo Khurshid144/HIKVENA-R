@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - HIKVENA PVT.LTD</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-[#f0f4f8] flex items-center justify-center h-screen antialiased">
+
+    <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-gray-100">
+        <div class="text-center mb-8">
+            <div class="bg-[#102a43] text-white w-14 h-14 rounded-xl flex items-center justify-center mx-auto mb-3 shadow-md">
+                <i class="fa-solid fa-graduation-cap text-2xl"></i>
+            </div>
+            <h1 class="text-xl font-extrabold text-[#102a43] uppercase tracking-wider">HIKVENA PVT.LTD</h1>
+            <p class="text-xs text-gray-500 mt-1">School Management System - Secure Login</p>
+        </div>
+
+        <form id="loginForm" class="space-y-5">
+            <div>
+                <label class="block text-[11px] font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Username / Admission No</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400"><i class="fa-solid fa-user"></i></span>
+                    <input type="text" id="username" required placeholder="Enter username..." class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg text-sm focus:border-blue-600 focus:outline-none transition">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-[11px] font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Password</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400"><i class="fa-solid fa-lock"></i></span>
+                    <input type="password" id="password" required placeholder="••••••••" class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg text-sm focus:border-blue-600 focus:outline-none transition">
+                </div>
+            </div>
+
+            <button type="submit" id="loginBtn" class="w-full bg-[#102a43] hover:bg-[#081b2d] text-white py-3 rounded-lg text-sm font-bold shadow-lg transition flex items-center justify-center gap-2">
+                <span>Secure Login</span> <i class="fa-solid fa-arrow-right-to-bracket"></i>
+            </button>
+        </form>
+    </div>
+
+    <script>
+        const supabaseUrl = 'https://kngxrrcegwkwsfhesoom.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtuZ3hycmNlZ3drd3NmaGVzb29tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxNTgyMDcsImV4cCI6MjEwNTczNDIwN30.igoDWIfnRGTPhSA_RhU_gUOZEzK3TuVmttH_B4m7rIE';
+        const db = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const uInput = document.getElementById('username').value.trim();
+            const pInput = document.getElementById('password').value.trim();
+            const btn = document.getElementById('loginBtn');
+
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifying with Database...';
+            btn.disabled = true;
+
+            try {
+                // 🔒 DIRECT DATABASE MATCH QUERY 🔒
+                const { data, error } = await db.from('users')
+                    .select('*')
+                    .eq('username', uInput)
+                    .eq('password', pInput)
+                    .single();
+
+                if (error || !data) {
+                    throw new Error("Invalid Username or Password!");
+                }
+
+                // Save minimal required verification state in session
+                localStorage.setItem('school_user', JSON.stringify({
+                    id: data.id,
+                    name: data.name,
+                    role: data.role,
+                    username: data.username
+                }));
+
+                // Role-based dynamic routing
+                const role = data.role;
+                if (role === 'Admin' || role === 'Principal') {
+                    window.location.replace('index.html');
+                } else if (role === 'Teacher') {
+                    window.location.replace('teacher_dashboard.html');
+                } else if (role === 'Accountant' || role === 'Clerk') {
+                    window.location.replace('accountant_dashboard.html');
+                } else if (role === 'Student') {
+                    window.location.replace('student_dashboard.html');
+                } else {
+                    window.location.replace('index.html');
+                }
+
+            } catch (err) {
+                alert("Login Failed: " + err.message);
+                btn.innerHTML = '<span>Secure Login</span> <i class="fa-solid fa-arrow-right-to-bracket"></i>';
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
